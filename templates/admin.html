@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | PREDEL-MAKER</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body class="admin-body">
+    <div class="animated-bg"></div>
+    <nav class="glass-nav">
+        <div class="nav-content">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>PREDEL-MAKER</span>
+            </div>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> Home</a>
+                <a href="/driver"><i class="fas fa-truck"></i> Driver</a>
+                <a href="/customer"><i class="fas fa-user"></i> Customer</a>
+                <a href="/admin" class="active"><i class="fas fa-chart-line"></i> Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <div class="page-header">
+            <h1 class="gradient-text">Delivery Monitoring Dashboard</h1>
+            <p class="subtitle">Real-time delay tracking and analytics</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card glass-card">
+                <i class="fas fa-clock"></i>
+                <div class="stat-info">
+                    <span class="stat-label">Total Delays</span>
+                    <span class="stat-value" id="totalDelays">0</span>
+                </div>
+            </div>
+            <div class="stat-card glass-card">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="stat-info">
+                    <span class="stat-label">High Risk</span>
+                    <span class="stat-value" id="highRisk">0</span>
+                </div>
+            </div>
+            <div class="stat-card glass-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="stat-info">
+                    <span class="stat-label">On Time</span>
+                    <span class="stat-value" id="onTime">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="premium-button" onclick="loadContexts()">
+                <i class="fas fa-sync-alt"></i>
+                <span>Load Delay History</span>
+            </button>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search delays..." id="searchInput">
+            </div>
+        </div>
+
+        <div class="table-container glass-card">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-traffic-light"></i> Traffic</th>
+                        <th><i class="fas fa-cloud-rain"></i> Weather</th>
+                        <th><i class="fas fa-hourglass-half"></i> Stop Duration</th>
+                        <th><i class="fas fa-comment"></i> Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="context_table"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="/static/js/admin.js"></script>
+</body>
+
+</html>

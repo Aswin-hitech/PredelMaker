@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Panel | PREDEL-MAKER</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body class="customer-body">
+    <div class="animated-bg"></div>
+    <nav class="glass-nav">
+        <div class="nav-content">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>PREDEL-MAKER</span>
+            </div>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> Home</a>
+                <a href="/driver"><i class="fas fa-truck"></i> Driver</a>
+                <a href="/customer" class="active"><i class="fas fa-user"></i> Customer</a>
+                <a href="/admin"><i class="fas fa-chart-line"></i> Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="customer-container">
+        <div class="page-header">
+            <h1 class="gradient-text">Delivery Status</h1>
+            <p class="subtitle">Real-time tracking for your order</p>
+        </div>
+
+        <div class="tracking-card glass-card">
+            <div class="order-header">
+                <div class="order-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="order-info">
+                    <span class="order-label">Order ID</span>
+                    <span class="order-value" id="order">ORD-1024</span>
+                </div>
+            </div>
+
+            <div class="progress-tracker">
+                <div class="progress-step completed">
+                    <i class="fas fa-check"></i>
+                    <span>Order Placed</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step active">
+                    <i class="fas fa-truck"></i>
+                    <span>In Transit</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <i class="fas fa-home"></i>
+                    <span>Delivered</span>
+                </div>
+            </div>
+
+            <div class="eta-display">
+                <div class="eta-card">
+                    <i class="fas fa-calendar-check"></i>
+                    <div class="eta-details">
+                        <span class="eta-label">Original ETA</span>
+                        <span class="eta-value" id="original_eta">30 minutes</span>
+                    </div>
+                </div>
+                <div class="eta-card updated">
+                    <i class="fas fa-sync-alt"></i>
+                    <div class="eta-details">
+                        <span class="eta-label">Updated ETA</span>
+                        <span class="eta-value" id="updated_eta">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-message" id="delay_msg">
+                <div class="status-icon">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                </div>
+                <span>Checking delivery status...</span>
+            </div>
+        </div>
+
+        <div class="live-map glass-card">
+            <h3><i class="fas fa-map-marked-alt"></i> Live Tracking</h3>
+            <div id="customerMap" style="height: 400px; border-radius: 16px; position: relative; z-index: 1;"></div>
+        </div>
+    </main>
+
+    <script src="/static/js/notification.js"></script>
+    <script src="/static/js/customer.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Panel | PREDEL-MAKER</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body class="driver-body">
+    <div class="animated-bg"></div>
+    <nav class="glass-nav">
+        <div class="nav-content">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>PREDEL-MAKER</span>
+            </div>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> Home</a>
+                <a href="/driver" class="active"><i class="fas fa-truck"></i> Driver</a>
+                <a href="/customer"><i class="fas fa-user"></i> Customer</a>
+                <a href="/admin"><i class="fas fa-chart-line"></i> Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="driver-container">
+        <div class="page-header">
+            <h1 class="gradient-text">Driver Delivery Monitor</h1>
+            <div class="header-status">
+                <p class="subtitle">AI-powered delay prediction system</p>
+                <div id="gpsStatus" class="gps-badge">
+                    <i class="fas fa-location-arrow"></i>
+                    <span>GPS: Initializing...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="driver-grid">
+            <div class="input-section glass-card">
+                <h3><i class="fas fa-sliders-h"></i> Input Parameters</h3>
+
+                <div class="input-row">
+                    <div class="input-group half">
+                        <label for="vehicle_type">
+                            <i class="fas fa-motorcycle"></i>
+                            Vehicle Type
+                        </label>
+                        <select id="vehicle_type" class="premium-select">
+                            <option value="bike">🏍️ Bike</option>
+                            <option value="scooter">🛵 Scooter</option>
+                            <option value="car" selected>🚗 Car</option>
+                            <option value="truck">🚚 Truck</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group half">
+                        <label for="route_type">
+                            <i class="fas fa-road"></i>
+                            Route Type
+                        </label>
+                        <select id="route_type" class="premium-select">
+                            <option value="city" selected>🏙️ City</option>
+                            <option value="suburban">🏘️ Suburban</option>
+                            <option value="highway">🛣️ Highway</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group half">
+                        <label for="driver_location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Driver Location
+                        </label>
+                        <input type="text" id="driver_location" class="premium-input"
+                            placeholder="e.g., Downtown, Main St" value="Downtown">
+                        <div class="location-suggestions" id="locationSuggestions"></div>
+                    </div>
+
+                    <div class="input-group half">
+                        <label for="destination">
+                            <i class="fas fa-flag-checkered"></i>
+                            Destination
+                        </label>
+                        <input type="text" id="destination" class="premium-input" placeholder="e.g., Airport, Mall"
+                            value="Airport">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="speed">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Current Speed (km/h)
+                    </label>
+                    <input type="number" id="speed" class="premium-input" value="40" min="0" max="120" step="1">
+                    <div class="input-range">
+                        <input type="range" min="0" max="120" value="40" class="range-slider" id="speedRange">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="speed_drop">
+                        <i class="fas fa-arrow-down"></i>
+                        Speed Drop (km/h)
+                    </label>
+                    <input type="number" id="speed_drop" class="premium-input" value="10" min="0" max="60" step="1">
+                    <div class="input-range">
+                        <input type="range" min="0" max="60" value="10" class="range-slider" id="speedDropRange">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="distance_remaining">
+                        <i class="fas fa-road"></i>
+                        Distance Remaining (km)
+                    </label>
+                    <input type="number" id="distance_remaining" class="premium-input" value="5" min="0" max="100"
+                        step="0.1">
+                    <div class="input-range">
+                        <input type="range" min="0" max="100" value="5" step="0.1" class="range-slider"
+                            id="distanceRange" disabled>
+                    </div>
+                    <small class="auto-tag"><i class="fas fa-magic"></i> Auto-calculated via GPS</small>
+                </div>
+
+                <div class="input-group">
+                    <label for="stop_duration">
+                        <i class="fas fa-pause-circle"></i>
+                        Stop Duration (minutes)
+                    </label>
+                    <input type="number" id="stop_duration" class="premium-input" value="1" min="0" max="60" step="0.5">
+                    <div class="input-range">
+                        <input type="range" min="0" max="60" value="1" step="0.5" class="range-slider" id="stopRange">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group half">
+                        <label for="traffic_level">
+                            <i class="fas fa-traffic-light"></i>
+                            Traffic
+                        </label>
+                        <select id="traffic_level" class="premium-select" disabled>
+                            <option value="0">🟢 Low (Clear traffic)</option>
+                            <option value="1">🟡 Moderate (Some congestion)</option>
+                            <option value="2">🔴 High (Heavy traffic)</option>
+                        </select>
+                        <small class="auto-tag"><i class="fas fa-magic"></i> Auto-calculated</small>
+                    </div>
+
+                    <div class="input-group half">
+                        <label for="weather_condition">
+                            <i class="fas fa-cloud-sun"></i>
+                            Weather
+                        </label>
+                        <select id="weather_condition" class="premium-select" disabled>
+                            <option value="0">☀️ Clear</option>
+                            <option value="1">🌧️ Rain</option>
+                            <option value="2">⛈️ Storm</option>
+                        </select>
+                        <small class="auto-tag"><i class="fas fa-magic"></i> Auto-calculated</small>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="time_of_day">
+                        <i class="fas fa-clock"></i>
+                        Time of Day
+                    </label>
+                    <input type="number" id="time_of_day" class="premium-input" value="14" min="0" max="23" disabled>
+                    <small class="auto-tag"><i class="fas fa-magic"></i> System Time</small>
+                    <div class="time-indicator">
+                        <span>00:00</span>
+                        <span id="currentTimeDisplay">14:00</span>
+                        <span>23:00</span>
+                    </div>
+                </div>
+
+                <div class="estimated-time glass-card mini">
+                    <i class="fas fa-stopwatch"></i>
+                    <div class="eta-mini">
+                        <span class="label">Est. Delivery Time</span>
+                        <span class="value" id="estimatedDelivery">35 min</span>
+                    </div>
+                </div>
+
+                <button class="premium-button pulse" id="predictBtn" onclick="predictDelay()" disabled>
+                    <i class="fas fa-brain"></i>
+                    <span>Predict Delay with AI</span>
+                </button>
+                <p class="btn-hint" id="destHint">Enter destination to enable prediction</p>
+            </div>
+
+            <div class="output-section glass-card">
+                <h3><i class="fas fa-chart-bar"></i> Prediction Results</h3>
+
+                <div class="risk-meter">
+                    <div class="risk-header">
+                        <span>Delay Risk</span>
+                        <span id="risk" class="risk-value">-</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="riskProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="result-card" id="eta">
+                    <i class="fas fa-hourglass-half"></i>
+                    <div class="result-content">
+                        <span class="result-label">New ETA</span>
+                        <span class="result-value">- minutes</span>
+                    </div>
+                </div>
+
+                <div class="result-card" id="explanation">
+                    <i class="fas fa-robot"></i>
+                    <div class="result-content">
+                        <span class="result-label">AI Explanation</span>
+                        <span class="result-text">Waiting for input...</span>
+                    </div>
+                </div>
+
+                <div class="result-card" id="suggestion">
+                    <i class="fas fa-lightbulb"></i>
+                    <div class="result-content">
+                        <span class="result-label">Driver Suggestion</span>
+                        <span class="result-text">Enter parameters to get suggestions</span>
+                    </div>
+                </div>
+
+                <div class="route-info glass-card mini" id="routeInfo" style="display: none;">
+                    <h4><i class="fas fa-route"></i> Route Analysis</h4>
+                    <div class="route-details"></div>
+                </div>
+
+                <div id="driverMap" class="glass-card"
+                    style="height: 400px; margin-top: 2rem; padding: 0; overflow: hidden; position: relative; z-index: 1;">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/notification.js"></script>
+    <script src="/static/js/driver.js"></script>
+</body>
+
+</html>

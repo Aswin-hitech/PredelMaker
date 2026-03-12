@@ -1,0 +1,13 @@
+Flask
+flask-cors
+python-dotenv
+xgboost
+scikit-learn
+joblib
+numpy
+pandas
+pymongo
+geopy
+groq
+sentence-transformers
+requests

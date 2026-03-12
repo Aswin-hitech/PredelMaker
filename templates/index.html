@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PREDEL-MAKER | Predictive Delivery Intelligence</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body class="index-body">
+    <div class="animated-bg"></div>
+
+    <div class="hero-section">
+        <nav class="glass-nav">
+            <div class="nav-content">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                    <span>PREDEL-MAKER</span>
+                </div>
+                <div class="nav-links">
+                    <a href="/" class="active"><i class="fas fa-home"></i> Home</a>
+                    <a href="/driver"><i class="fas fa-truck"></i> Driver</a>
+                    <a href="/customer"><i class="fas fa-user"></i> Customer</a>
+                    <a href="/admin"><i class="fas fa-chart-line"></i> Admin</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="gradient-text">Predictive Delivery</span>
+                <span class="block-text">Intelligence Platform</span>
+            </h1>
+            <p class="hero-subtitle">
+                Harness the power of AI to predict, prevent, and communicate delivery delays
+                in real-time. Built for modern logistics.
+            </p>
+
+            <div class="feature-cards">
+                <div class="feature-card glass-card" onclick="location.href='/driver'">
+                    <div class="feature-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3>Driver Panel</h3>
+                    <p>Real-time delay prediction with AI-powered insights and route optimization</p>
+                    <span class="feature-link">Access Panel <i class="fas fa-arrow-right"></i></span>
+                </div>
+
+                <div class="feature-card glass-card" onclick="location.href='/customer'">
+                    <div class="feature-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3>Customer Panel</h3>
+                    <p>Live delivery tracking with proactive delay notifications and updates</p>
+                    <span class="feature-link">Track Order <i class="fas fa-arrow-right"></i></span>
+                </div>
+
+                <div class="feature-card glass-card" onclick="location.href='/admin'">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Admin Dashboard</h3>
+                    <p>Comprehensive analytics and delay history monitoring system</p>
+                    <span class="feature-link">View Dashboard <i class="fas fa-arrow-right"></i></span>
+                </div>
+            </div>
+
+            <div class="stats-banner">
+                <div class="stat-item">
+                    <span class="stat-number">99.9%</span>
+                    <span class="stat-label">Prediction Accuracy</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">Real-time Monitoring</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">1000+</span>
+                    <span class="stat-label">Deliveries Daily</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add smooth scroll animations
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
