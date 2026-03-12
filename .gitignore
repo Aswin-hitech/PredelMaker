@@ -1,0 +1,71 @@
+# ----------------------------
+# Environment variables
+# ----------------------------
+.env
+.env.*
+*.env
+
+# ----------------------------
+# Python cache files
+# ----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ----------------------------
+# Virtual environments
+# ----------------------------
+venv/
+env/
+ENV/
+.venv/
+
+# ----------------------------
+# Model files (optional if large)
+# ----------------------------
+*.pkl
+*.joblib
+
+# If you want to keep the model in repo, comment above and use:
+# !models/delay_xgb_model.pkl
+
+# ----------------------------
+# Logs
+# ----------------------------
+*.log
+
+# ----------------------------
+# OS files
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# IDE files
+# ----------------------------
+.vscode/
+.idea/
+
+# ----------------------------
+# Build / distribution
+# ----------------------------
+build/
+dist/
+*.egg-info/
+
+# ----------------------------
+# Jupyter notebooks checkpoints
+# ----------------------------
+.ipynb_checkpoints
+
+# ----------------------------
+# Database files
+# ----------------------------
+*.sqlite3
+*.db
+
+# ----------------------------
+# Temporary files
+# ----------------------------
+*.tmp
+*.temp
