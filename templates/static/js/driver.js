@@ -14,7 +14,8 @@ const manualOverride = {
     traffic_level: false,
     weather_condition: false,
     stop_duration: false,
-    time_of_day: false
+    time_of_day: false,
+    driver_location: false
 };
 
 // Initialize range sliders and autocomplete
@@ -53,10 +54,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Request Browser Notification Permission
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
     }
+
+    // New: Handle manual override for driver_location
+    const locInput = document.getElementById('driver_location');
+    if (locInput) {
+        locInput.addEventListener('input', () => { manualOverride.driver_location = true; });
+    }
+
+    // New: Auto-fetch GPS on load
+    autoFetchGPS();
 
     // Listen for destination changes
     const destInput = document.getElementById('destination');
@@ -147,6 +156,45 @@ function toggleGPS() {
                 btn.classList.remove('active');
                 if (label) label.style.display = 'none';
             }
+        },
+        { 
+            enableHighAccuracy: true, 
+            timeout: 10000, 
+            maximumAge: 0 
+        }
+    );
+}
+
+// New: Automatic GPS detection on page load
+function autoFetchGPS() {
+    if (!navigator.geolocation) {
+        updateGPSStatus('error', 'GPS unavailable — enter location manually');
+        return;
+    }
+
+    updateGPSStatus('searching', 'GPS: Locating...');
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            currentCoords = {
+                lat: position.coords.latitude,
+                lon: position.coords.longitude,
+                timestamp: Date.now()
+            };
+
+            updateGPSStatus('success', 'GPS: Found');
+            
+            if (driverMarker && map) {
+                driverMarker.setLatLng([currentCoords.lat, currentCoords.lon]);
+                map.setView([currentCoords.lat, currentCoords.lon], 15);
+            }
+
+            // Immediately fetch features (reverse geocodes + syncs analytics)
+            fetchAutoFeatures();
+        },
+        (error) => {
+            console.error('Initial GPS Error:', error);
+            updateGPSStatus('error', 'GPS unavailable — enter location manually');
         },
         { 
             enableHighAccuracy: true, 
@@ -250,7 +298,9 @@ async function fetchAutoFeatures() {
             document.getElementById('stopRange').value = Math.min(60, data.stop_duration);
         }
 
-        document.getElementById('driver_location').value = data.current_address;
+        if (!manualOverride.driver_location && data.current_address) {
+            document.getElementById('driver_location').value = data.current_address;
+        }
 
         // Enable prediction
         btn.disabled = false;
