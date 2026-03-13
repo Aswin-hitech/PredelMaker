@@ -1,5 +1,5 @@
 import joblib
-from backend.onfig import Config
+from backend.config import Config
 
 class ModelLoader:
 

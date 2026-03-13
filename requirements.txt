@@ -11,3 +11,6 @@ geopy
 groq
 sentence-transformers
 requests
+selenium
+webdriver-manager
+beautifulsoup4

@@ -1,7 +1,7 @@
 import os
 from groq import Groq
 from backend.config import Config
-from backend.ector_store import get_similar_context
+from backend.vector_store import get_similar_context
 
 
 client = Groq(

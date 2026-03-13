@@ -10,58 +10,16 @@ if ("Notification" in window && Notification.permission !== "granted" && Notific
 }
 
 async function fetchStatus() {
-    // Phase 2 & 3: Simulate live updates
-    const payload = {
-        vehicle_type: "car",
-        route_type: "city",
-        speed: 40,
-        speed_drop: 10,
-        distance_remaining: 5,
-        traffic_level: 1,
-        weather_condition: 0,
-        stop_duration: 1,
-        time_of_day: 14
-    };
-
+    // Phase 4: Customer dashboard is PASSIVE. 
+    // It only displays ETA, location, and map.
+    // In a production system, this would fetch from a /get-session-status endpoint.
     try {
-        const response = await fetch("/predict-delay", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        const etaEl = document.getElementById("updated_eta");
-        const msgEl = document.getElementById("delay_msg");
-
-        if (etaEl) etaEl.innerText = data.eta_update.new_eta + " minutes";
-
-        if (msgEl) {
-            if (data.prediction.delay_prediction === 1) {
-                msgEl.innerText = "Delivery delayed due to traffic";
-                msgEl.style.color = "#f87171";
-            } else {
-                msgEl.innerText = "Delivery on schedule";
-                msgEl.style.color = "#34d399";
-            }
-        }
-
-        // Handle Intelligent Notifications
-        if (data.notifications && data.notifications.length > 0) {
-            data.notifications.forEach(msg => {
-                if (!lastSeenNotifications.includes(msg)) {
-                    if (typeof NotificationSystem !== 'undefined') {
-                        NotificationSystem.showToast(msg, 'warning');
-                        NotificationSystem.sendBrowserNotification('PREDEL-MAKER Tracker', msg);
-                    }
-                }
-            });
-            lastSeenNotifications = data.notifications;
-        }
-
-        // Phase 3: Update Map (Assuming some dummy live coordinates for demo)
+        // Simulating passive update of driver location
         updateCustomerMap();
+        
+        // For this demo, we assume ETA is updated by the driver's actions
+        // and stored in a shared state or DB. We don't trigger new predictions here.
+        console.log("Customer status refresh (Passive)");
 
     } catch (error) {
         console.error("Live update error:", error);
@@ -69,31 +27,31 @@ async function fetchStatus() {
 }
 
 function initCustomerMap() {
-    if (!document.getElementById('customerMap')) return;
+    const mapEl = document.getElementById('customerMap');
+    if (!mapEl) return;
 
-    customerMap = L.map('customerMap').setView([12.9716, 77.5946], 13);
+    customerMap = L.map('customerMap').setView([11.0168, 76.9558], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(customerMap);
 
-    driverMarker = L.marker([12.9716, 77.5946], {
+    driverMarker = L.marker([11.0168, 76.9558], {
         icon: L.icon({
             iconUrl: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
             iconSize: [40, 40]
         })
-    }).addTo(customerMap).bindPopup("Driver is here");
+    }).addTo(customerMap).bindPopup("Driver");
 }
 
 async function updateCustomerMap() {
     if (!customerMap) initCustomerMap();
-
-    // In a real app, we'd fetch the latest driver lat/lon from the server
-    // For this demo, let's just slightly jitter the position
-    const lat = 12.9716 + (Math.random() - 0.5) * 0.01;
-    const lon = 77.5946 + (Math.random() - 0.5) * 0.01;
-
+    
+    // Simulate slight movement for UI demonstration
     if (driverMarker) {
-        driverMarker.setLatLng([lat, lon]);
+        const currentPos = driverMarker.getLatLng();
+        const nextLat = currentPos.lat + (Math.random() - 0.5) * 0.001;
+        const nextLon = currentPos.lng + (Math.random() - 0.5) * 0.001;
+        driverMarker.setLatLng([nextLat, nextLon]);
     }
 }
 

@@ -5,6 +5,7 @@ let map = null;
 let driverMarker = null;
 let destMarker = null;
 let routeLine = null;
+let watchId = null;
 
 const manualOverride = {
     speed: false,
@@ -32,8 +33,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Update time display
     updateTimeDisplay();
 
-    // GPS Initialization
-    initGPS();
+    // Bind GPS button
+    const gpsBtn = document.getElementById('useGPSBtn');
+    if (gpsBtn) {
+        gpsBtn.addEventListener('click', () => {
+            initGPS();
+        });
+    }
 
     // Map Initialization
     initMap();
@@ -54,29 +60,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Listen for destination changes
     const destInput = document.getElementById('destination');
+    const updatePredictState = () => {
+        const dest = destInput.value;
+        const dist = document.getElementById('distance_remaining').value;
+        const btn = document.getElementById('predictBtn');
+        if (btn) {
+            btn.disabled = !(dest && dest.length >= 3 && dist);
+        }
+    };
+
+    destInput.addEventListener('input', updatePredictState);
     destInput.addEventListener('change', () => {
-        fetchAutoFeatures();
         updateMapRoute();
+        updatePredictState();
     });
     destInput.addEventListener('blur', () => {
-        fetchAutoFeatures();
         updateMapRoute();
     });
+
+    const distInput = document.getElementById('distance_remaining');
+    distInput.addEventListener('input', updatePredictState);
+    distInput.addEventListener('change', updatePredictState);
 
     // Initial estimated time calculation
     updateEstimatedTime();
 });
 
-// Location suggestions database
-const locationDatabase = [
-    'Downtown', 'Airport', 'Central Station', 'Shopping Mall',
-    'Business District', 'Industrial Area', 'Harbor', 'University',
-    'Stadium', 'Convention Center', 'Tech Park', 'Medical Center',
-    'Residential Area', 'Market Square', 'Bus Terminal', 'Metro Station'
-];
+function toggleGPS() {
+    const btn = document.getElementById('useGPSBtn');
+    const label = document.getElementById('gpsTrackingLabel');
 
-function initGPS() {
-    const statusEl = document.getElementById('gpsStatus');
+    if (watchId !== null) {
+        // Stop tracking
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        btn.classList.remove('active');
+        btn.querySelector('span').textContent = 'Use Current Location';
+        if (label) label.style.display = 'none';
+        updateGPSStatus('info', 'GPS: Stopped');
+        return;
+    }
+
+    // Start tracking
     if (!navigator.geolocation) {
         updateGPSStatus('error', 'GPS: Not Supported');
         return;
@@ -84,7 +109,7 @@ function initGPS() {
 
     updateGPSStatus('searching', 'GPS: Locating...');
 
-    navigator.geolocation.watchPosition(
+    watchId = navigator.geolocation.watchPosition(
         (position) => {
             if (currentCoords) {
                 lastCoords = { ...currentCoords };
@@ -95,30 +120,61 @@ function initGPS() {
                 lon: position.coords.longitude,
                 timestamp: Date.now()
             };
+
+            // Update UI
+            btn.classList.add('active');
+            btn.querySelector('span').textContent = 'Stop Tracking';
+            if (label) label.style.display = 'flex';
             updateGPSStatus('success', 'GPS: Active');
 
-            if (driverMarker && currentCoords) {
+            if (driverMarker && map) {
                 driverMarker.setLatLng([currentCoords.lat, currentCoords.lon]);
-                if (!destMarker) map.setView([currentCoords.lat, currentCoords.lon]);
+                // If it's the first fix, center map
+                if (!lastCoords) map.setView([currentCoords.lat, currentCoords.lon], 15);
             }
 
-            // If we have a destination, refresh features and map
-            if (document.getElementById('destination').value.length > 3) {
-                fetchAutoFeatures();
-                updateMapRoute();
-            }
+            fetchAutoFeatures();
         },
         (error) => {
             console.error('GPS Error:', error);
-            updateGPSStatus('error', 'GPS: Signal Lost');
+            const errorMsg = error.code === 1 ? 'Permission Denied' : (error.code === 2 ? 'Position Unavailable' : 'Timeout');
+            updateGPSStatus('error', `GPS: ${errorMsg}`);
+            
+            // Stop tracking on fatal error
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                btn.classList.remove('active');
+                if (label) label.style.display = 'none';
+            }
         },
-        { enableHighAccuracy: true }
+        { 
+            enableHighAccuracy: true, 
+            timeout: 10000, 
+            maximumAge: 0 
+        }
     );
 }
 
+// Map binding to the new toggle function
+document.addEventListener('DOMContentLoaded', function() {
+    const gpsBtn = document.getElementById('useGPSBtn');
+    if (gpsBtn) {
+        // Remove old listener if any and add new one
+        gpsBtn.replaceWith(gpsBtn.cloneNode(true));
+        document.getElementById('useGPSBtn').addEventListener('click', toggleGPS);
+    }
+});
+
+// Phase 4: Simple UI updates only, no auto-prediction triggers
+setInterval(() => {
+    updateEstimatedTime();
+}, 10000);
+
 function updateGPSStatus(type, message) {
     const el = document.getElementById('gpsStatus');
-    el.className = 'gps-badge ' + (type === 'error' ? 'error' : '');
+    if (!el) return;
+    el.className = 'gps-badge ' + (type === 'error' ? 'error' : (type === 'success' ? 'success' : ''));
     el.querySelector('span').textContent = message;
 
     const icon = el.querySelector('i');
@@ -132,14 +188,17 @@ async function fetchAutoFeatures() {
     const btn = document.getElementById('predictBtn');
     const hint = document.getElementById('destHint');
 
-    if (!dest || dest.length < 3 || !currentCoords) {
-        btn.disabled = true;
-        if (!currentCoords) hint.textContent = "Waiting for GPS signal...";
+    if (!dest || dest.length < 3) {
+        if (btn) btn.disabled = true;
         return;
     }
 
     try {
         hint.textContent = "Updating real-time features...";
+        const distInput = document.getElementById('distance_remaining');
+        if (distInput && !manualOverride.distance_remaining) {
+            distInput.value = "Fetching Distance...";
+        }
 
         const payload = {
             destination: dest,
@@ -206,43 +265,90 @@ async function fetchAutoFeatures() {
 }
 
 function setupLocationAutocomplete() {
-    const locationInput = document.getElementById('driver_location');
-    const suggestionsDiv = document.getElementById('locationSuggestions');
+    const inputs = [
+        { id: 'driver_location', suggestionsId: 'locationSuggestions' },
+        { id: 'destination', suggestionsId: null }
+    ];
 
-    locationInput.addEventListener('input', function () {
-        const inputValue = this.value.toLowerCase();
-        if (inputValue.length < 2) {
+    inputs.forEach(cfg => {
+        const input = document.getElementById(cfg.id);
+        if (!input) return;
+
+        // Create suggestions div if not exists and needed
+        let suggestionsDiv = cfg.suggestionsId ? document.getElementById(cfg.suggestionsId) : null;
+        if (!suggestionsDiv) {
+            suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'location-suggestions';
             suggestionsDiv.style.display = 'none';
-            return;
+            input.parentNode.style.position = 'relative';
+            input.parentNode.appendChild(suggestionsDiv);
         }
 
-        const matches = locationDatabase.filter(location =>
-            location.toLowerCase().includes(inputValue)
-        );
+        let debounceTimer;
+        input.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const query = this.value;
+            
+            if (query.length < 3) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
 
-        if (matches.length > 0) {
-            suggestionsDiv.innerHTML = '';
-            matches.forEach(match => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.innerHTML = `<i class="fas fa-map-pin"></i> ${match}`;
-                div.onclick = () => {
-                    locationInput.value = match;
-                    suggestionsDiv.style.display = 'none';
-                    highlightInput(locationInput);
-                };
-                suggestionsDiv.appendChild(div);
-            });
-            suggestionsDiv.style.display = 'block';
-        } else {
-            suggestionsDiv.style.display = 'none';
-        }
-    });
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`);
+                    const matches = await res.json();
 
-    document.addEventListener('click', function (e) {
-        if (!locationInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-            suggestionsDiv.style.display = 'none';
-        }
+                    if (matches.length > 0) {
+                        suggestionsDiv.innerHTML = '';
+                        matches.forEach(match => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.innerHTML = `<i class="fas fa-map-pin"></i> ${match.display_name}`;
+                            div.onclick = () => {
+                                input.value = match.display_name;
+                                suggestionsDiv.style.display = 'none';
+                                
+                                const coords = { 
+                                    lat: parseFloat(match.lat), 
+                                    lon: parseFloat(match.lon), 
+                                    timestamp: Date.now() 
+                                };
+
+                                if (cfg.id === 'driver_location') {
+                                    currentCoords = coords;
+                                    if (map) {
+                                        map.setView([currentCoords.lat, currentCoords.lon], 13);
+                                        driverMarker.setLatLng([currentCoords.lat, currentCoords.lon]);
+                                    }
+                                    fetchAutoFeatures();
+                                } else {
+                                    // Handle destination
+                                    updateMapRoute();
+                                }
+                                
+                                // Trigger event for predict button logic
+                                input.dispatchEvent(new Event('change'));
+                                highlightInput(input);
+                            };
+                            suggestionsDiv.appendChild(div);
+                        });
+                        suggestionsDiv.style.display = 'block';
+                    } else {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                } catch (error) { 
+                    console.error('Autocomplete Error:', error); 
+                }
+            }, 300);
+        });
+
+        // Hide suggestions on click outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== input && e.target !== suggestionsDiv) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
     });
 }
 
@@ -255,11 +361,14 @@ function updateTimeDisplay() {
         timeDisplay.textContent = `${hour}:00`;
     });
 
-    timeDisplay.textContent = `${timeInput.value.padStart(2, '0')}:00`;
+    if (timeInput && timeDisplay) {
+        timeDisplay.textContent = `${timeInput.value.padStart(2, '0')}:00`;
+    }
 }
 
 function updateEstimatedTime() {
-    const distance = parseFloat(document.getElementById('distance_remaining').value) || 5;
+    const distance_el = document.getElementById('distance_remaining');
+    const distance = distance_el ? parseFloat(distance_el.value) || 5 : 5;
     const vehicleType = document.getElementById('vehicle_type').value;
     const routeType = document.getElementById('route_type').value;
 
@@ -282,7 +391,8 @@ function updateEstimatedTime() {
 
     const estimatedMinutes = Math.round((distance / effectiveSpeed) * 60);
 
-    document.getElementById('estimatedDelivery').textContent = estimatedMinutes + ' min';
+    const estDisplay = document.getElementById('estimatedDelivery');
+    if (estDisplay) estDisplay.textContent = estimatedMinutes + ' min';
 }
 
 function setupRangeSync(inputId, rangeId) {
@@ -308,7 +418,7 @@ function setupInputAnimations() {
 
     inputs.forEach(input => {
         input.addEventListener('focus', function () {
-            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transform = 'scale(1.01)';
         });
 
         input.addEventListener('blur', function () {
@@ -337,15 +447,16 @@ async function predictDelay() {
     const payload = {
         vehicle_type: document.getElementById("vehicle_type").value,
         route_type: document.getElementById("route_type").value,
-        driver_location: document.getElementById("driver_location").value,
-        destination: document.getElementById("destination").value,
+        origin_address: document.getElementById("driver_location").value,
+        destination_address: document.getElementById("destination").value,
         speed: parseFloat(document.getElementById("speed").value),
         speed_drop: parseFloat(document.getElementById("speed_drop").value),
         distance_remaining: parseFloat(document.getElementById("distance_remaining").value),
         traffic_level: parseInt(document.getElementById("traffic_level").value),
         weather_condition: parseInt(document.getElementById("weather_condition").value),
         stop_duration: parseFloat(document.getElementById("stop_duration").value),
-        time_of_day: parseInt(document.getElementById("time_of_day").value)
+        time_of_day: parseInt(document.getElementById("time_of_day").value),
+        trigger_llm: true // Only run LLM when explicitly clicking Predict
     };
 
     try {
@@ -495,7 +606,7 @@ function animateProgressBar(element, targetWidth) {
 }
 
 function typeWriter(element, text, speed = 30) {
-    if (!element) return;
+    if (!element || !text) return;
     element.innerHTML = '';
     let i = 0;
     function type() {
@@ -536,12 +647,12 @@ function showDriverNotification(message, type = 'info') {
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         z-index: 1000;
         backdrop-filter: blur(10px);
-        animation: slideInRight 0.3s ease;
+        animation: fadeIn 0.3s ease;
     `;
 
     document.body.appendChild(notification);
     setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease';
+        notification.style.animation = 'fadeIn 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
@@ -600,3 +711,4 @@ async function updateMapRoute() {
         console.error("Map Update Error:", e);
     }
 }
+

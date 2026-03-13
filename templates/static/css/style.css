@@ -53,7 +53,11 @@ body {
     }
 }
 
-/* Glass Navigation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .glass-nav {
     background: rgba(10, 10, 10, 0.8);
     backdrop-filter: blur(20px);
@@ -62,17 +66,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
-    animation: slideDown 0.5s var(--animation-curve);
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-100%);
-    }
-
-    to {
-        transform: translateY(0);
-    }
+    animation: fadeIn 0.4s ease;
 }
 
 .nav-content {
@@ -101,6 +95,7 @@ body {
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
     animation: rotate 10s linear infinite;
 }
 
@@ -210,7 +205,17 @@ body {
     }
 }
 
-/* Glass Cards */
+@keyframes fadeInSubtle {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
@@ -218,20 +223,8 @@ body {
     border: 1px solid var(--glass-border);
     border-radius: 24px;
     padding: 2rem;
-    transition: all 0.3s var(--animation-curve);
-    animation: fadeInUp 0.6s var(--animation-curve);
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    transition: all 0.2s ease;
+    animation: fadeInSubtle 0.5s ease;
 }
 
 .glass-card:hover {
@@ -408,7 +401,7 @@ body {
 
 .hero-title {
     margin-bottom: 2rem;
-    animation: fadeInDown 1s var(--animation-curve);
+    animation: fadeIn 0.8s ease;
 }
 
 @keyframes fadeInDown {
@@ -505,7 +498,7 @@ body {
 }
 
 .feature-card:hover .feature-link {
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 /* Stats Banner */
@@ -620,7 +613,7 @@ body {
 
 .result-card:hover {
     background: rgba(255, 255, 255, 0.1);
-    transform: translateX(10px);
+    transform: translateY(-2px);
 }
 
 .result-card i {
@@ -1000,16 +993,16 @@ body {
     top: 100%;
     left: 0;
     right: 0;
-    background: rgba(20, 20, 30, 0.95);
+    background: #111 !important;
     backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    border-radius: 8px;
     margin-top: 0.5rem;
     max-height: 200px;
     overflow-y: auto;
     z-index: 1000;
     display: none;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.2s ease;
 }
 
 .suggestion-item {
@@ -1023,9 +1016,8 @@ body {
 }
 
 .suggestion-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: #222 !important;
     color: white;
-    padding-left: 1.5rem;
 }
 
 .suggestion-item i {
@@ -1222,27 +1214,13 @@ body {
 }
 
 /* Animation for New Elements */
-@keyframes slideInRight {
+@keyframes fadeIn {
     from {
-        transform: translateX(100%);
         opacity: 0;
     }
 
     to {
-        transform: translateX(0);
         opacity: 1;
-    }
-}
-
-@keyframes slideOutRight {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-
-    to {
-        transform: translateX(100%);
-        opacity: 0;
     }
 }
 
@@ -1375,3 +1353,39 @@ body {
     cursor: not-allowed;
     animation: none;
 }
+
+/* GPS Tracking Styles */
+.gps-toggle-button {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    background: #6b7280;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.gps-toggle-button.active {
+    background: #10b981;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+}
+
+.gps-toggle-button i {
+    font-size: 1.2rem;
+}
+
+.gps-tracking-text {
+    color: #10b981;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}

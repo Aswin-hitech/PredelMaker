@@ -40,6 +40,9 @@ def customer():
 def admin():
     return render_template("admin.html")
 
+from backend.apis.distance_engine import calculate_corrected_distance
+from backend.apis.terrain_detector import detect_terrain
+
 @app.route("/auto-features", methods=["POST"])
 def auto_features():
     data = request.json
@@ -59,13 +62,12 @@ def auto_features():
     # 1. Base auto features (Weather, Traffic, Address)
     features = generate_auto_features(lat, lon, dest_address)
 
-    # Calculate distance using geodesic (since generate_auto_features defaults to 5.0)
-    from geopy.distance import geodesic
-    dest_coords = get_coordinates(dest_address)
-    distance_remaining = 5.0
-    if dest_coords:
-        distance_remaining = geodesic((lat, lon), dest_coords).km
-    features["distance_remaining"] = round(distance_remaining, 2)
+    # distance_remaining calculation (Geodesic x 1.32 as per requirement)
+    current_addr = coordinates_to_address(lat, lon)
+    distance_remaining = calculate_distance(current_addr, dest_address)
+        
+    features["distance_remaining"] = distance_remaining
+    features["current_address"] = current_addr
 
     # 2. Telemetry (Speed, Stop)
     speed = 0
@@ -82,56 +84,63 @@ def auto_features():
 
     return jsonify(features)
 
-from services.delay_context_store import get_all_contexts
-
-@app.route("/admin-contexts")
-def admin_contexts():
-
-    contexts = get_all_contexts()
-
-    return jsonify(contexts)
-
 @app.route("/predict-delay", methods=["POST"])
 def predict():
-
     data = request.json
     print(f"[DEBUG] Incoming prediction request: {data}")
 
-    # Required features for the ML model
     required_fields = [
         "vehicle_type", "route_type", "speed", "speed_drop",
         "distance_remaining", "traffic_level", "weather_condition",
-        "stop_duration", "time_of_day"
+        "stop_duration", "time_of_day", "origin_address", "destination_address"
     ]
 
-    # Validate that all required fields are present
     for field in required_fields:
         if field not in data:
-            print(f"[ERROR] Missing required field: {field}")
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
     try:
+        # Distance is already provided by frontend (calculated via geodesic * 1.32)
+        # But we double check and ensure terrain is detected
+        origin_coords = get_coordinates(data["origin_address"])
+        dest_coords = get_coordinates(data["destination_address"])
+
+        if origin_coords and dest_coords:
+            data["terrain_type"] = detect_terrain(
+                origin_coords[0], origin_coords[1], dest_coords[0], dest_coords[1]
+            )
+        else:
+            data["terrain_type"] = "plain"
+            
         prediction = predict_delay(data)
     except Exception as e:
         print(f"[ERROR] Prediction failed: {str(e)}")
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
 
     risk = calculate_risk(prediction["delay_probability"])
-
+    
+    traffic_delay = 10 if data["traffic_level"] == 2 else (5 if data["traffic_level"] == 1 else 0)
+    weather_delay = 15 if data["weather_condition"] == 2 else (7 if data["weather_condition"] == 1 else 0)
+    stop_delay = data.get("stop_duration", 0)
+    
     eta_update = update_eta(
-        base_eta_minutes=30,
-        probability=prediction["delay_probability"]
+        distance_km=data["distance_remaining"],
+        speed_kmh=data["speed"],
+        traffic_delay=traffic_delay,
+        stop_delay=stop_delay,
+        weather_delay=weather_delay,
+        terrain_type=data.get("terrain_type", "plain")
     )
 
-    explanation = generate_explanation(
-        prediction["delay_probability"],
-        data
-    )
-
-    suggestion = driver_suggestion(data)
+    # LLM POLICY: Strictly on Predict button AND probability > 0.4
+    explanation = "Risk is minimal. Delivery proceeding normally."
+    suggestion = "Maintain current speed and follow the planned route."
+    
+    if data.get("trigger_llm") and prediction["delay_probability"] > 0.4:
+        explanation = generate_explanation(prediction["delay_probability"], data)
+        suggestion = driver_suggestion(data)
 
     if prediction["delay_prediction"] == 1:
-
         store_delay_context({
             "traffic_level": data["traffic_level"],
             "weather_condition": data["weather_condition"],
@@ -140,16 +149,12 @@ def predict():
         })
 
     notifications = []
-    
-    # Notification Triggers
     if prediction['delay_probability'] > 0.6:
         notifications.append("🚨 Delivery delay likely. High traffic or weather issues detected.")
     if data.get('traffic_level') == 2:
         notifications.append("🔴 Heavy traffic detected on your route.")
     if data.get('weather_condition') == 2:
         notifications.append("⛈️ Storm conditions detected. Please drive safely.")
-    if data.get('stop_duration', 0) > 5:
-        notifications.append("⚠️ Long vehicle stop detected.")
 
     return jsonify({
         "prediction": prediction,
@@ -157,7 +162,8 @@ def predict():
         "eta_update": eta_update,
         "explanation": explanation,
         "suggestion": suggestion,
-        "notifications": notifications
+        "notifications": notifications,
+        "terrain_type": data.get("terrain_type", "plain")
     })
 
 
